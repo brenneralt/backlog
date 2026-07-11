@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Fila de Tela</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+
+  <!-- ══════════════ LOGIN ══════════════ -->
+  <div id="screen-login">
+    <div class="brand">
+      <div class="brand-icon">🎬</div>
+      <div class="brand-title">Fila de <span>Tela</span></div>
+      <div class="brand-sub">Trakt · AniList · Franquias · Histórico</div>
+    </div>
+
+    <div class="card lcard" id="card-saved" style="display:none">
+      <h2>👋 Bem-vindo de volta</h2>
+      <div class="poll-row">
+        <div class="spinner"></div><span id="saved-msg">Carregando sessão…</span>
+      </div>
+    </div>
+
+    <div class="card lcard" id="card-main">
+      <h2>Conectar fontes</h2>
+      <p>Conecte o Trakt para filmes/séries e/ou o AniList para animes. Pode usar os dois ao mesmo tempo.</p>
+
+      <!-- SEÇÃO DE EXPLICAÇÃO DOS LOGINS -->
+      <div class="login-help-sect">
+        <div class="login-help-title" onclick="toggleLoginHelp(this)">ℹ️ Como fazer login (Ajuda / Passo a Passo)</div>
+        <div class="login-help-content">
+          <div style="font-weight:600;color:var(--accent);margin-top:.2rem">● Trakt (OAuth Automático)</div>
+          <ol>
+            <li>Cole seu <strong>Client ID</strong> do Trakt (link "Criar app" abaixo ajuda a obter um).</li>
+            <li>Configure a Redirect URI no site do Trakt como: <code class="ic">urn:ietf:wg:oauth:2.0:oob</code></li>
+            <li>Clique em "Conectar Trakt via OAuth" e siga as instruções inserindo o código exibido na tela.</li>
+          </ol>
+
+          <div style="font-weight:600;color:#02a9ff;margin-top:.2rem">● AniList (OAuth Automático - com Servidor)</div>
+          <ol>
+            <li>Se estiver rodando a página em um servidor local (ex: extension Live Server do VS Code, rodando em <code
+                class="ic">http://127.0.0.1:5500/...</code>).</li>
+            <li>No desenvolvedor do AniList, defina o <strong>Redirect URI</strong> para a URL exata do seu navegador
+              (ex: <code class="ic">http://127.0.0.1:5500/trakt-site.html</code>).</li>
+            <li>Insira o Client ID e clique em "Conectar AniList via OAuth".</li>
+          </ol>
+
+          <div style="font-weight:600;color:#02a9ff;margin-top:.2rem">● AniList (Token Manual - Recomendado para arquivo
+            local <code class="ic">file:///</code>)</div>
+          <ol>
+            <li>Se você abriu o arquivo direto com 2 cliques no Windows.</li>
+            <li>No desenvolvedor do AniList, crie um client e defina o <strong>Redirect URI</strong> como exatamente:
+              <code class="ic">https://anilist.co/api/v2/oauth/pin</code>
+            </li>
+            <li>Abra esta URL no seu navegador para autorizar (o ID abaixo muda ao digitar no campo "Client ID" do
+              AniList): <br><a class="link" id="al-manual-auth-link"
+                href="https://anilist.co/api/v2/oauth/authorize?client_id=44001&response_type=token" target="_blank"
+                style="font-size:.72rem">Abrir link de autorização (com ID 44001)</a></li>
+            <li>Copie o token de acesso exibido na tela após autorizar, e cole-o no campo <strong>Access Token</strong>
+              manual do AniList!</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- TRAKT SECTION -->
+      <div
+        style="border:1px solid var(--border);border-radius:var(--r);padding:.85rem;display:flex;flex-direction:column;gap:.65rem">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="font-weight:600;font-size:.85rem;display:flex;align-items:center;gap:.4rem">
+            <span style="color:#ed1c24">●</span> Trakt
+          </div>
+          <span id="trakt-status" style="font-size:.72rem;color:var(--t3)">não conectado</span>
+        </div>
+        <div class="field">
+          <label class="fl">Client ID</label>
+          <input type="text" id="inp-cid" placeholder="Cole seu Client ID aqui…" />
+          <p style="font-size:.7rem;color:var(--t3);margin-top:.18rem">
+            <a class="link" href="https://trakt.tv/oauth/applications/new" target="_blank">Criar app</a> — Redirect URI:
+            <code class="ic">urn:ietf:wg:oauth:2.0:oob</code>
+          </p>
+        </div>
+        <button class="btn btn-secondary btn-full btn-sm" onclick="startTraktFlow()">Conectar Trakt via OAuth →</button>
+        <div class="divider">ou token manual</div>
+        <div style="display:grid;grid-template-columns:1fr 2fr;gap:.4rem">
+          <div class="field"><label class="fl">Usuário</label><input type="text" id="inp-usr" placeholder="username" />
+          </div>
+          <div class="field"><label class="fl">Access Token</label><input type="password" id="inp-tok"
+              placeholder="token…" /></div>
+        </div>
+        <button class="btn btn-ghost btn-sm btn-full" onclick="loginTraktManual()">Entrar com token manual</button>
+      </div>
+
+      <!-- ANILIST SECTION -->
+      <div class="al-panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem">
+          <h3 style="color:#02a9ff;margin:0">🎌 AniList</h3>
+          <span id="al-status" style="font-size:.72rem;color:var(--t3)">não conectado</span>
+        </div>
+
+        <div id="al-disconnected" style="display:flex;flex-direction:column;gap:.65rem">
+          <div class="field">
+            <label class="fl" style="color:#02a9ffcc">Client ID</label>
+            <input type="text" id="inp-al-cid" placeholder="Cole seu Client ID aqui…"
+              oninput="updateALAuthLink(this.value)" />
+            <p style="font-size:.7rem;color:var(--t3);margin-top:.18rem">
+              <a class="link" href="https://anilist.co/settings/developer" target="_blank" style="color:#02a9ff">Criar
+                client</a> — Redirect URI: URL deste app
+            </p>
+          </div>
+          <button class="btn btn-al btn-full btn-sm" onclick="startAniListFlowFromLogin()">Conectar AniList via OAuth
+            →</button>
+
+          <div class="divider">ou token manual</div>
+          <div class="field">
+            <label class="fl" style="color:#02a9ffcc">Access Token</label>
+            <input type="password" id="inp-al-tok" placeholder="token do AniList…" />
+            <p style="font-size:.7rem;color:var(--t3);margin-top:.18rem">
+              Gere um token manualmente autorizando o app e cole aqui.
+            </p>
+          </div>
+          <button class="btn btn-ghost btn-sm btn-full" onclick="loginALManual()" style="color:#02a9ff">Entrar com token
+            manual</button>
+        </div>
+
+        <div id="al-connected" style="display:none;flex-direction:column;gap:.65rem">
+          <div class="al-status-grid" id="al-status-grid"></div>
+        </div>
+      </div>
+
+      <!-- TMDB KEY (optional, for posters) -->
+      <div
+        style="border:1px solid var(--border);border-radius:var(--r);padding:.85rem;display:flex;flex-direction:column;gap:.55rem">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="font-weight:600;font-size:.82rem;display:flex;align-items:center;gap:.4rem">🖼 Capas de
+            filmes/séries <span style="font-size:.7rem;color:var(--t3);font-weight:400">(opcional)</span></div>
+        </div>
+        <div class="field">
+          <label class="fl">TMDB API Key <span style="font-weight:400;color:var(--t3)">(grátis)</span></label>
+          <input type="text" id="inp-tmdb" placeholder="sua key do themoviedb.org…" />
+          <p style="font-size:.7rem;color:var(--t3);margin-top:.2rem">
+            Grátis em <a class="link" href="https://www.themoviedb.org/settings/api"
+              target="_blank">themoviedb.org/settings/api</a> · Sem key as capas ficam como ícone
+          </p>
+        </div>
+      </div>
+
+      <!-- OMDB KEY -->
+      <div style="border:1px solid var(--border);border-radius:var(--r);padding:.85rem;display:flex;flex-direction:column;gap:.55rem;margin-top:.65rem">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="font-weight:600;font-size:.82rem;display:flex;align-items:center;gap:.4rem">⭐ Notas — OMDb API Key <span style="font-size:.7rem;color:var(--t3);font-weight:400">(opcional)</span></div>
+        </div>
+        <div class="field">
+          <label class="fl">OMDb API Key <span style="font-weight:400;color:var(--t3)">(grátis)</span></label>
+          <input type="text" id="inp-omdb" placeholder="sua key do omdbapi.com…" />
+          <p style="font-size:.7rem;color:var(--t3);margin-top:.2rem">
+            Grátis em <a class="link" href="https://www.omdbapi.com/apikey.aspx" target="_blank">omdbapi.com/apikey.aspx</a> · Mostra notas IMDb, Metacritic e RT.
+          </p>
+        </div>
+      </div>
+
+      <div id="err-login" class="alert ae" style="display:none;margin-top:1rem"></div>
+
+      <button class="btn btn-primary btn-full" id="btn-enter" onclick="proceedToApp()" style="display:none">Entrar no
+        app →</button>
+
+      <div class="divider">ou</div>
+      <button class="btn btn-ghost btn-full" style="border:1px dashed var(--border)" onclick="loadDemo()">Carregar
+        demonstração</button>
+    </div>
+
+    <!-- DEVICE FLOW CARD -->
+    <div class="card lcard" id="card-device" style="display:none">
+      <h2>Autorize no Trakt</h2>
+      <p style="font-size:.8rem;color:var(--t3)">1 · Acesse <a class="link" id="dev-url" href="#"
+          target="_blank"></a><br />2 · Digite o código abaixo</p>
+      <div class="dcode" id="dev-code">——————</div>
+      <div class="poll-row">
+        <div class="pdot"></div><span id="poll-msg">Aguardando autorização…</span>
+      </div>
+      <div style="font-family:var(--mono);font-size:.66rem;color:var(--t4)" id="dev-timer"></div>
+      <button class="btn btn-ghost btn-full" onclick="cancelDevice()">← Voltar</button>
+    </div>
+  </div>
+
+  <!-- ══════════════ APP ══════════════ -->
+  <div id="screen-app" style="display:none;flex-direction:column;min-height:100vh">
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:.75rem">
+        <div class="logo">
+          <div class="logo-icon">🎬</div>Fila de <span>Tela</span>
+        </div>
+        <div class="topbar-user">@<strong id="lbl-user">—</strong></div>
+        <div class="src-pills">
+          <span class="src-pill sp-trakt" id="pill-trakt" style="display:none">Trakt</span>
+          <span class="src-pill sp-al" id="pill-al" style="display:none">AniList</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <div class="sync-pill">
+          <span class="sdot" id="sdot"></span>
+          <span id="slbl" style="font-size:.7rem">—</span>
+          <select id="sel-refresh" onchange="setAutoRefresh(this.value)"
+            style="border:none;background:transparent;color:var(--t3);font-size:.7rem;cursor:pointer;padding:0;appearance:none;-webkit-appearance:none;background-image:none;outline:none;margin-left:.2rem">
+            <option value="0">manual</option>
+            <option value="5">5 min</option>
+            <option value="15" selected>15 min</option>
+            <option value="30">30 min</option>
+            <option value="60">1h</option>
+          </select>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="refreshData()">↺</button>
+        <button class="btn btn-ghost btn-sm" onclick="openSettings()" title="Configurações">⚙️</button>
+        <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sair</button>
+      </div>
+    </header>
+
+    <div class="app-body">
+      <aside class="sidebar">
+
+
+        <div class="sbsect">
+          <div class="sbh">Listas <span style="display:flex;gap:.2rem"><button class="btn btn-xs btn-ghost"
+                onclick="selectAllLists()">Todas</button><button class="btn btn-xs btn-ghost"
+                onclick="deselectAllLists()">Nenhuma</button></span></div>
+          <div id="list-picker">
+            <div class="poll-row">
+              <div class="spinner"></div><span style="font-size:.75rem;color:var(--t3)">Carregando…</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sbsect">
+          <div class="sbh">⚡ Modo rápido</div>
+          <button class="preset" id="pr-oldmovies" onclick="applyPreset('oldmovies')"><span class="pname">🎬 Filmes
+              antigos</span><span class="pdesc">Do mais antigo ao mais novo</span></button>
+          <button class="preset" id="pr-almostdone" onclick="applyPreset('almostdone')"><span class="pname">🏁 Quase
+              terminei</span><span class="pdesc">Séries/animes com poucos eps</span></button>
+          <button class="preset" id="pr-newseason" onclick="applyPreset('newseason')"><span class="pname">🆕 Nova
+              temporada</span><span class="pdesc">Disponível e não viu</span></button>
+          <button class="preset" id="pr-inprogress" onclick="applyPreset('inprogress')"><span class="pname">▶ Em
+              andamento</span><span class="pdesc">Comecei e não terminei</span></button>
+          <button class="preset" id="pr-combo" onclick="applyPreset('combo')"><span class="pname">🎬 + ▶ Filmes &amp;
+              andamento</span><span class="pdesc">Filmes antigos + séries em andamento</span></button>
+          <button class="preset" id="pr-planning" onclick="applyPreset('planning')"><span class="pname">📋
+              Planejados</span><span class="pdesc">Tudo que quer assistir (AniList)</span></button>
+        </div>
+
+        <div class="sbsect">
+          <div class="sbh">Tipo <span
+              style="font-weight:400;text-transform:none;letter-spacing:0;font-size:.65rem;color:var(--t4)">(múltiplo)</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:.28rem">
+            <button class="chip" id="chip-movie" onclick="toggleType('movie')">🎬 Filmes</button>
+            <button class="chip" id="chip-show" onclick="toggleType('show')">📺 Séries</button>
+            <button class="chip" id="chip-anime" onclick="toggleType('anime')">⛩ Animes</button>
+          </div>
+        </div>
+
+        <div class="sbsect">
+          <div class="sbh">Estado <span
+              style="font-weight:400;text-transform:none;letter-spacing:0;font-size:.65rem;color:var(--t4)">(múltiplo)</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:.28rem">
+            <button class="chip" id="chip-inprogress" onclick="toggleState('inprogress')">▶ Andando</button>
+            <button class="chip" id="chip-newseason" onclick="toggleState('newseason')">🆕 Nova temp.</button>
+            <button class="chip" id="chip-notseen" onclick="toggleState('notseen')">👁 Não comecei</button>
+            <button class="chip" id="chip-almostdone" onclick="toggleState('almostdone')">🏁 &lt;6 eps</button>
+            <button class="chip" id="chip-planning" onclick="toggleState('planning')">📋 Planejado</button>
+            <button class="chip" id="chip-paused" onclick="toggleState('paused')">⏸ Pausado</button>
+          </div>
+        </div>
+
+        <div class="sbsect">
+          <div class="sbh">Período <span
+              style="font-weight:400;text-transform:none;letter-spacing:0;font-size:.65rem;color:var(--t4)">(múltiplo)</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:.28rem">
+            <button class="chip" id="chip-2020s" onclick="toggleDecade('2020s')">2020s</button>
+            <button class="chip" id="chip-2010s" onclick="toggleDecade('2010s')">2010s</button>
+            <button class="chip" id="chip-2000s" onclick="toggleDecade('2000s')">2000s</button>
+            <button class="chip" id="chip-1990s" onclick="toggleDecade('1990s')">90s</button>
+            <button class="chip" id="chip-pre1990" onclick="toggleDecade('pre1990')">Clássicos</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.35rem;margin-top:.28rem">
+            <div class="field"><label class="fl" style="font-size:.6rem">De</label><input type="text" id="inp-yfrom"
+                placeholder="1950" maxlength="4" oninput="render()" /></div>
+            <div class="field"><label class="fl" style="font-size:.6rem">Até</label><input type="text" id="inp-yto"
+                placeholder="2025" maxlength="4" oninput="render()" /></div>
+          </div>
+        </div>
+
+        <div class="sbsect">
+          <div class="sbh">Ordenar por</div>
+          <div id="sort-list">
+            <div class="sitem on" data-s="alpha" onclick="setSort('alpha')"><span class="sradio"></span>A–Z</div>
+            <div class="sitem" data-s="year-asc" onclick="setSort('year-asc')"><span class="sradio"></span>Mais antigo
+            </div>
+            <div class="sitem" data-s="year-desc" onclick="setSort('year-desc')"><span class="sradio"></span>Mais
+              recente</div>
+            <div class="sitem" data-s="eps-asc" onclick="setSort('eps-asc')"><span class="sradio"></span>Menos eps rest.
+            </div>
+            <div class="sitem" data-s="eps-desc" onclick="setSort('eps-desc')"><span class="sradio"></span>Mais eps
+              rest.</div>
+            <div class="sitem" data-s="prog-desc" onclick="setSort('prog-desc')"><span class="sradio"></span>Mais
+              avançado</div>
+          </div>
+          <div class="field" style="margin-top:.28rem">
+            <label class="fl" style="font-size:.6rem">Desempate</label>
+            <select id="sel-sort2" onchange="S.sort2=this.value;render()">
+              <option value="none">— nenhum —</option>
+              <option value="year-asc">Mais antigo</option>
+              <option value="year-desc">Mais recente</option>
+              <option value="eps-asc">Menos eps</option>
+              <option value="alpha">A–Z</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="btn btn-ghost btn-full btn-sm" style="border:1px dashed var(--border);margin-top:auto"
+          onclick="resetFilters()">↺ Limpar filtros</button>
+      </aside>
+
+      <main class="content">
+        <div class="tabs">
+          <button class="tab on" id="tab-fila" onclick="switchTab('fila')">📋 Fila <span class="tn"
+              id="tc-fila">0</span></button>
+          <button class="tab" id="tab-agora" onclick="switchTab('agora')">🎯 Agora</button>
+          <button class="tab" id="tab-franchise" onclick="switchTab('franchise')">🎬 Franquias <span class="tn"
+              id="tc-franchise">0</span></button>
+          <button class="tab" id="tab-books" onclick="switchTab('books')">📚 Livros <span class="tn"
+              id="tc-books">0</span></button>
+          <button class="tab" id="tab-games" onclick="switchTab('games')">🎮 Jogos <span class="tn"
+              id="tc-games">0</span></button>
+          <button class="tab" id="tab-youtube" onclick="switchTab('youtube')">▶️ YouTube <span class="tn"
+              id="tc-youtube">0</span></button>
+          <button class="tab" id="tab-history" onclick="switchTab('history')">🕐 Histórico <span class="tn"
+              id="tc-history">0</span></button>
+          <button class="tab" id="tab-revisited" onclick="switchTab('revisited')">🔁 Revisit. <span class="tn"
+              id="tc-revisited">0</span></button>
+        </div>
+
+        <div class="stats-row">
+          <div class="scard">
+            <div class="sval" id="s-total">—</div>
+            <div class="slbl">Total</div>
+          </div>
+          <div class="scard">
+            <div class="sval" id="s-movies">—</div>
+            <div class="slbl">Filmes</div>
+          </div>
+          <div class="scard">
+            <div class="sval" id="s-shows">—</div>
+            <div class="slbl">Séries</div>
+          </div>
+          <div class="scard">
+            <div class="sval" id="s-animes">—</div>
+            <div class="slbl">Animes</div>
+          </div>
+          <div class="scard">
+            <div class="sval" id="s-eps">—</div>
+            <div class="slbl">Eps rest.</div>
+          </div>
+          <div class="scard" style="cursor:pointer" onclick="openTimeDetails()"
+            title="Clique para ver o detalhamento do tempo">
+            <div class="sval" id="s-time">—</div>
+            <div class="slbl">⏱️ Tempo</div>
+          </div>
+        </div>
+
+        <div id="fbar" class="fbar" style="display:none">
+          <span class="fbar-lbl">Filtros:</span>
+          <div id="ftags" style="display:flex;flex-wrap:wrap;gap:.28rem"></div>
+          <button class="btn btn-xs btn-ghost" style="margin-left:auto" onclick="resetFilters()">Limpar</button>
+        </div>
+
+        <!-- FILA -->
+        <div id="pane-fila">
+          <div class="toolbar">
+            <div class="sbox"><span class="sico">🔍</span><input type="search" id="inp-search"
+                placeholder="Buscar título…" oninput="render()" /></div>
+            <span class="cpill" id="lbl-count">0 itens</span>
+            <button class="btn btn-secondary btn-sm" onclick="openShuffle()" title="Sortear um item da fila">🎲
+              Sortear</button>
+            <div class="vbtns">
+              <button class="vbtn on" id="vbtn-list" onclick="setView('list')" title="Lista">☰</button>
+              <button class="vbtn" id="vbtn-grid" onclick="setView('grid')" title="Grade">⊞</button>
+            </div>
+          </div>
+          <div id="media-container">
+            <div class="state-box">
+              <div class="spinner" style="width:22px;height:22px;border-width:2.5px"></div>Carregando…
+            </div>
+          </div>
+        </div>
+
+        <!-- FRANCHISE -->
+        <div id="pane-franchise" style="display:none">
+          <div class="toolbar" style="margin-bottom:.5rem">
+            <div class="sbox"><span class="sico">🔍</span><input type="search" id="inp-fr-search"
+                placeholder="Buscar franquia…" oninput="renderFranchises()" /></div>
+            <button class="btn btn-primary btn-sm" onclick="openFrEditor(null)">+ Nova</button>
+            <button class="btn btn-secondary btn-sm" id="btn-autodetect" onclick="autoDetect()">⚡ Detectar auto</button>
+            <span class="cpill" id="lbl-fr-count">0</span>
+          </div>
+          <div id="franchise-container">
+            <div class="state-box"><span class="stico">🎬</span>Nenhuma franquia.<br><span
+                style="font-size:.72rem;color:var(--t4);margin-top:.3rem;display:block">Clique em "Detectar auto" ou
+                crie manualmente.</span></div>
+          </div>
+        </div>
+
+        <!-- AGORA — CONTEXT QUEUE -->
+        <div id="pane-agora" style="display:none">
+          <div style="margin-bottom:.65rem;display:flex;align-items:center;justify-content:space-between">
+            <p style="font-size:.78rem;color:var(--t3);line-height:1.5">O próximo de cada categoria organizado por
+              <strong>quando</strong> você costuma consumir.
+            </p>
+            <button class="btn btn-secondary btn-sm" onclick="renderAgora()">↺ Atualizar</button>
+          </div>
+          <div class="ctx-grid" id="agora-container">
+            <div class="state-box">
+              <div class="spinner" style="width:20px;height:20px;border-width:2px"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOOKS -->
+        <div id="pane-books" style="display:none">
+          <div class="toolbar" style="margin-bottom:.5rem">
+            <div class="sbox"><span class="sico">🔍</span><input type="search" id="inp-bk-search"
+                placeholder="Buscar livro…" oninput="renderBooks()" /></div>
+            <select id="sel-bk-status" onchange="renderBooks()"
+              style="font-size:.76rem;padding:.36rem .6rem;padding-right:1.6rem">
+              <option value="all">Todos</option>
+              <option value="reading">Lendo</option>
+              <option value="want">Quero ler</option>
+              <option value="paused">Pausado</option>
+              <option value="done">Lido</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="openBookEditor(null)">+ Adicionar</button>
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('sg-import-inp').click()"
+              title="Importar CSV do StoryGraph">📥 StoryGraph CSV</button>
+            <input type="file" id="sg-import-inp" accept=".csv" style="display:none"
+              onchange="importStoryGraphCSV(this)" />
+            <span class="cpill" id="lbl-bk-count">0</span>
+          </div>
+          <div
+            style="margin-bottom:.5rem;font-size:.72rem;color:var(--t3);background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:.5rem .75rem">
+            💡 Exporte seu CSV em <strong>StoryGraph → Configurações → Import/Export</strong> e importe aqui. Ou
+            adicione manualmente.
+          </div>
+          <div id="books-container">
+            <div class="state-box"><span class="stico">📚</span>Nenhum livro ainda.<br><span
+                style="font-size:.72rem;color:var(--t4);margin-top:.3rem;display:block">Adicione manualmente ou importe
+                CSV do StoryGraph.</span></div>
+          </div>
+        </div>
+
+        <!-- GAMES -->
+        <div id="pane-games" style="display:none">
+          <div class="toolbar" style="margin-bottom:.5rem">
+            <div class="sbox"><span class="sico">🔍</span><input type="search" id="inp-gm-search"
+                placeholder="Buscar jogo…" oninput="renderGames()" /></div>
+            <select id="sel-gm-status" onchange="renderGames()"
+              style="font-size:.76rem;padding:.36rem .6rem;padding-right:1.6rem">
+              <option value="all">Todos</option>
+              <option value="playing">Jogando</option>
+              <option value="backlog">Backlog</option>
+              <option value="done">Zerado</option>
+              <option value="dropped">Abandonado</option>
+            </select>
+            <select id="sel-gm-ctx" onchange="renderGames()"
+              style="font-size:.76rem;padding:.36rem .6rem;padding-right:1.6rem">
+              <option value="all">Todos contextos</option>
+              <option value="sleep">Antes de dormir</option>
+              <option value="weekend">Fim de semana</option>
+              <option value="any">Qualquer hora</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="openGameEditor(null)">+ Adicionar</button>
+            <span class="cpill" id="lbl-gm-count">0</span>
+          </div>
+          <div id="games-container">
+            <div class="state-box"><span class="stico">🎮</span>Nenhum jogo ainda.<br><span
+                style="font-size:.72rem;color:var(--t4);margin-top:.3rem;display:block">Adicione manualmente. Backloggd
+                não tem API ainda — mas você pode exportar de lá e copiar aqui.</span></div>
+          </div>
+        </div>
+
+        <!-- HISTORY -->
+        <div id="pane-history" style="display:none">
+          <div class="toolbar" style="margin-bottom:.2rem">
+            <div class="sbox"><span class="sico">🔍</span><input type="search" id="inp-hist"
+                placeholder="Buscar histórico…" oninput="renderHistory()" /></div>
+            <select id="sel-hist-type" onchange="renderHistory()"
+              style="font-size:.76rem;padding:.36rem .6rem;padding-right:1.6rem">
+              <option value="all">Todos</option>
+              <option value="movie">Filmes</option>
+              <option value="episode">Episódios</option>
+            </select>
+            <span class="cpill" id="lbl-hist-count">0</span>
+          </div>
+          <div id="history-container">
+            <div class="state-box">
+              <div class="spinner" style="width:22px;height:22px;border-width:2.5px"></div>Carregando histórico…
+            </div>
+          </div>
+        </div>
+
+        <!-- YOUTUBE QUEUE -->
+        <div id="pane-youtube" style="display:none">
+          <div class="toolbar" style="margin-bottom:.5rem">
+            <div class="sbox"><span class="sico">🔍</span><input type="search" id="inp-yt-search"
+                placeholder="Buscar vídeo ou canal…" oninput="renderYT()" /></div>
+            <select id="sel-yt-cat" onchange="renderYT()"
+              style="font-size:.76rem;padding:.36rem .6rem;padding-right:1.6rem">
+              <option value="all">Todas categorias</option>
+              <option value="video">Vídeos</option>
+              <option value="series">Séries/Playlists</option>
+              <option value="channel">Canais</option>
+            </select>
+            <select id="sel-yt-status" onchange="renderYT()"
+              style="font-size:.76rem;padding:.36rem .6rem;padding-right:1.6rem">
+              <option value="all">Todos</option>
+              <option value="watch">Assistir</option>
+              <option value="watching">Assistindo</option>
+              <option value="done">Assistido</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="openYTEditor(null)">+ Adicionar</button>
+            <span class="cpill" id="lbl-yt-count">0</span>
+          </div>
+          <div id="yt-container">
+            <div class="state-box"><span class="stico">▶️</span>Nenhum vídeo ainda.<br><span
+                style="font-size:.72rem;color:var(--t4);margin-top:.3rem;display:block">Adicione links do YouTube,
+                playlists ou canais.</span></div>
+          </div>
+        </div>
+
+        <!-- REVISITED -->
+        <div id="pane-revisited" style="display:none">
+          <div id="revisited-container">
+            <div class="state-box"><span class="stico">🔁</span>Carregando…</div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- FRANCHISE MODAL -->
+  <div class="modal-ov" id="fr-modal" style="display:none" onclick="if(event.target===this)closeFrModal()">
+    <div class="modal">
+      <h3 id="fr-modal-title">Nova Franquia</h3>
+      <div class="field"><label class="fl">Nome</label><input type="text" id="fr-modal-name" placeholder="ex: Alien" />
+      </div>
+      <div>
+        <div class="fl" style="margin-bottom:.4rem">Itens em ordem</div>
+        <div class="frelist" id="fr-modal-list"></div>
+      </div>
+      <div class="field">
+        <label class="fl">Adicionar item</label>
+        <div class="fradrow">
+          <div class="acwrap" style="flex:1">
+            <input type="text" id="fr-add-inp" placeholder="Buscar na fila…" oninput="frAC(this.value)"
+              autocomplete="off" />
+            <div class="aclist" id="fr-ac" style="display:none"></div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="frAddSel()">+</button>
+        </div>
+      </div>
+      <div class="mfoot">
+        <button class="btn btn-ghost" onclick="closeFrModal()">Cancelar</button>
+        <button class="btn btn-sm" id="fr-del-btn" onclick="deleteFr()"
+          style="display:none;background:var(--rbg);color:var(--red);border:1px solid var(--rbd)">Excluir</button>
+        <button class="btn btn-primary" onclick="saveFr()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOOK MODAL -->
+  <div class="modal-ov" id="bk-modal" style="display:none" onclick="if(event.target===this)closeBkModal()">
+    <div class="modal">
+      <h3 id="bk-modal-title">Adicionar Livro</h3>
+      <div class="form-grid">
+        <div class="field field-full"><label class="fl">Título</label><input type="text" id="bk-title"
+            placeholder="Nome do livro" /></div>
+        <div class="field"><label class="fl">Autor</label><input type="text" id="bk-author"
+            placeholder="Nome do autor" /></div>
+        <div class="field"><label class="fl">Total de páginas</label><input type="text" id="bk-pages"
+            placeholder="300" /></div>
+        <div class="field"><label class="fl">Página atual</label><input type="text" id="bk-page-cur" placeholder="0" />
+        </div>
+        <div class="field"><label class="fl">Ano</label><input type="text" id="bk-year" placeholder="2024" /></div>
+        <div class="field"><label class="fl">Status</label>
+          <select id="bk-status">
+            <option value="want">Quero ler</option>
+            <option value="reading">Lendo</option>
+            <option value="paused">Pausado</option>
+            <option value="done">Lido</option>
+          </select>
+        </div>
+        <div class="field field-full"><label class="fl">Contexto de leitura</label>
+          <select id="bk-ctx">
+            <option value="sleep">🌙 Antes de dormir</option>
+            <option value="any">⏰ Qualquer hora</option>
+            <option value="weekend">🗓 Fim de semana</option>
+          </select>
+        </div>
+        <div class="field field-full"><label class="fl">Gênero / notas (opcional)</label><input type="text"
+            id="bk-genre" placeholder="Ficção científica, filosofia…" /></div>
+      </div>
+      <div class="mfoot">
+        <button class="btn btn-ghost" onclick="closeBkModal()">Cancelar</button>
+        <button class="btn btn-sm" id="bk-del-btn" onclick="deleteBook()"
+          style="display:none;background:var(--rbg);color:var(--red);border:1px solid var(--rbd)">Excluir</button>
+        <button class="btn btn-primary" onclick="saveBook()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME MODAL -->
+  <div class="modal-ov" id="gm-modal" style="display:none" onclick="if(event.target===this)closeGmModal()">
+    <div class="modal">
+      <h3 id="gm-modal-title">Adicionar Jogo</h3>
+      <div class="form-grid">
+        <div class="field field-full"><label class="fl">Título</label><input type="text" id="gm-title"
+            placeholder="Nome do jogo" /></div>
+        <div class="field"><label class="fl">Plataforma</label><input type="text" id="gm-platform"
+            placeholder="PS4, PC, Mobile…" /></div>
+        <div class="field"><label class="fl">Horas estimadas</label><input type="text" id="gm-hours"
+            placeholder="30h" /></div>
+        <div class="field"><label class="fl">Status</label>
+          <select id="gm-status">
+            <option value="backlog">Backlog</option>
+            <option value="playing">Jogando</option>
+            <option value="done">Zerado</option>
+            <option value="dropped">Abandonado</option>
+          </select>
+        </div>
+        <div class="field"><label class="fl">Ano</label><input type="text" id="gm-year" placeholder="2024" /></div>
+        <div class="field field-full"><label class="fl">Contexto de jogo</label>
+          <select id="gm-ctx">
+            <option value="weekend">🗓 Fim de semana (narrativos)</option>
+            <option value="any">⏰ Qualquer hora (casual)</option>
+            <option value="sleep">🌙 Antes de dormir (leve)</option>
+          </select>
+        </div>
+        <div class="field field-full"><label class="fl">Notas (opcional)</label><input type="text" id="gm-notes"
+            placeholder="Continuação de God of War, etc…" /></div>
+      </div>
+      <div class="mfoot">
+        <button class="btn btn-ghost" onclick="closeGmModal()">Cancelar</button>
+        <button class="btn btn-sm" id="gm-del-btn" onclick="deleteGame()"
+          style="display:none;background:var(--rbg);color:var(--red);border:1px solid var(--rbd)">Excluir</button>
+        <button class="btn btn-primary" onclick="saveGame()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div class="modal-ov" id="settings-modal" style="display:none" onclick="if(event.target===this)closeSettings()">
+    <div class="modal" style="max-width:520px">
+      <h3>⚙️ Configurações</h3>
+
+      <!-- TRAKT STATUS -->
+      <div
+        style="border:1px solid var(--border);border-radius:var(--r);padding:.85rem;display:flex;flex-direction:column;gap:.55rem">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="font-weight:600;font-size:.85rem;display:flex;align-items:center;gap:.4rem"><span
+              style="color:#ed1c24">●</span> Trakt</div>
+          <span id="cfg-trakt-status" style="font-size:.72rem;color:var(--green)"></span>
+        </div>
+        <p id="cfg-trakt-info" style="font-size:.75rem;color:var(--t3)"></p>
+      </div>
+
+      <!-- ANILIST INTEGRATION -->
+      <div
+        style="border:1px solid #02a9ff33;border-radius:var(--r);padding:.85rem;background:#0d1117;display:flex;flex-direction:column;gap:.5rem">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="font-weight:600;font-size:.85rem;display:flex;align-items:center;gap:.4rem;color:#02a9ff">
+            🎌 AniList
+          </div>
+          <span id="cfg-al-status-lbl" style="font-size:.72rem;color:var(--t3)">não conectado</span>
+        </div>
+
+        <!-- Seção quando NÃO conectado -->
+        <div id="cfg-al-connect-ui" style="display:flex;flex-direction:column;gap:.55rem">
+          <p style="font-size:.75rem;color:#02a9ff88">Conecte sua conta do AniList para importar suas listas de animes
+            automaticamente.</p>
+          <div class="field">
+            <label class="fl" style="color:#02a9ffcc">Client ID do AniList</label>
+            <input type="text" id="cfg-al-cid" placeholder="Cole seu Client ID do AniList aqui…"
+              oninput="updateALAuthLink(this.value)" />
+            <p style="font-size:.7rem;color:var(--t3);margin-top:.2rem">
+              Obtenha em <a class="link" href="https://anilist.co/settings/developer" target="_blank"
+                style="color:#02a9ffcc">anilist.co/settings/developer</a>
+            </p>
+          </div>
+          <button class="btn btn-al btn-full btn-sm" onclick="cfgConnectAL()">Conectar AniList via OAuth →</button>
+        </div>
+
+        <!-- Seção quando conectado -->
+        <div id="cfg-al-connected-info" style="display:none;flex-direction:column;gap:.55rem">
+          <p style="font-size:.75rem;color:#02a9ff88">Conectado como <strong id="cfg-al-user"
+              style="color:#02a9ff"></strong>.</p>
+          <div class="al-status-grid" id="cfg-al-status-grid"></div>
+          <div style="display:flex;gap:.5rem;margin-top:.25rem">
+            <button class="btn btn-secondary btn-full btn-sm" onclick="cfgReloadAL()">Sincronizar dados</button>
+            <button class="btn btn-ghost btn-sm" onclick="cfgDisconnectAL()"
+              style="color:var(--red)">Desconectar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TMDB KEY -->
+      <div
+        style="border:1px solid var(--border);border-radius:var(--r);padding:.85rem;display:flex;flex-direction:column;gap:.55rem">
+        <div style="font-weight:600;font-size:.82rem;display:flex;align-items:center;gap:.4rem">🖼 Capas — TMDB API Key
+          <span style="font-size:.7rem;color:var(--t3);font-weight:400">(opcional)</span>
+        </div>
+        <div class="field">
+          <input type="text" id="cfg-tmdb-key" placeholder="sua key do themoviedb.org…" />
+          <p style="font-size:.7rem;color:var(--t3);margin-top:.2rem">
+            Grátis em <a class="link" href="https://www.themoviedb.org/settings/api"
+              target="_blank">themoviedb.org/settings/api</a> — Sem key, capas ficam como ícone.
+          </p>
+        </div>
+        <div style="display:flex;gap:.5rem">
+          <button class="btn btn-secondary btn-sm btn-full" onclick="cfgSaveTMDB()">Salvar key</button>
+          <button class="btn btn-ghost btn-sm" onclick="cfgClearPosters()" style="color:var(--t3)"
+            title="Limpar cache de capas">🗑 Cache</button>
+        </div>
+        <div id="cfg-tmdb-msg" style="display:none;font-size:.72rem;color:var(--green);font-family:var(--mono)"></div>
+      </div>
+
+      <!-- OMDB KEY -->
+      <div style="border:1px solid var(--border);border-radius:var(--r);padding:.85rem;display:flex;flex-direction:column;gap:.55rem">
+        <div style="font-weight:600;font-size:.82rem;display:flex;align-items:center;gap:.4rem">⭐ Notas — OMDb API Key
+          <span style="font-size:.7rem;color:var(--t3);font-weight:400">(opcional, IMDb/Metacritic/RT)</span>
+        </div>
+        <div class="field">
+          <input type="text" id="cfg-omdb-key" placeholder="sua key do omdbapi.com…" />
+          <p style="font-size:.7rem;color:var(--t3);margin-top:.2rem">
+            Grátis em <a class="link" href="https://www.omdbapi.com/apikey.aspx" target="_blank">omdbapi.com/apikey.aspx</a>
+          </p>
+        </div>
+        <div style="display:flex;gap:.5rem">
+          <button class="btn btn-secondary btn-sm btn-full" onclick="cfgSaveOMDb()">Salvar key</button>
+          <button class="btn btn-ghost btn-sm" onclick="cfgClearRatings()" style="color:var(--t3)" title="Limpar cache de notas">🗑 Cache</button>
+        </div>
+        <div id="cfg-omdb-msg" style="display:none;font-size:.72rem;color:var(--green);font-family:var(--mono)"></div>
+      </div>
+
+      <!-- BACKUP -->
+      <div
+        style="border:1px solid var(--border);border-radius:var(--r);padding:.85rem;display:flex;flex-direction:column;gap:.65rem">
+        <div style="font-weight:600;font-size:.82rem;display:flex;align-items:center;gap:.4rem">
+          💾 Backup &amp; Restauração
+          <span style="font-size:.7rem;color:var(--t3);font-weight:400">(livros, jogos, YouTube, franquias)</span>
+        </div>
+        <p style="font-size:.75rem;color:var(--t3);line-height:1.55">
+          Exporta todos os seus dados locais em CSV. Salve no Google Drive ou onde preferir.
+          Para restaurar, importe o mesmo arquivo.
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+          <button class="btn btn-secondary btn-full btn-sm" onclick="exportBackup()">📥 Exportar CSV</button>
+          <button class="btn btn-secondary btn-full btn-sm"
+            onclick="document.getElementById('backup-import-inp').click()">📤 Importar CSV</button>
+        </div>
+        <input type="file" id="backup-import-inp" accept=".csv" style="display:none" onchange="importBackup(this)" />
+        <div id="backup-msg"
+          style="display:none;font-size:.72rem;font-family:var(--mono);padding:.4rem .6rem;border-radius:3px"></div>
+        <div style="font-size:.7rem;color:var(--t4);line-height:1.5">
+          ⚠️ O Trakt/AniList não são incluídos no backup — os dados ficam nas contas respectivas.<br />
+          💡 Após exportar, salve o arquivo no <strong>Google Drive</strong> para ter acesso de qualquer lugar.
+        </div>
+      </div>
+
+      <div class="mfoot">
+        <button class="btn btn-primary" onclick="closeSettings()">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHUFFLE MODAL -->
+  <div class="modal-ov" id="shuffle-modal" style="display:none" onclick="if(event.target===this)closeShuffleModal()">
+    <div class="modal" style="max-width:440px;gap:1rem">
+      <h3>🎲 Sortear da Fila</h3>
+
+      <!-- Resultado do sorteio -->
+      <div id="shuffle-result" style="display:none">
+        <div
+          style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:1.1rem;display:flex;gap:.85rem;align-items:center">
+          <div id="shuffle-thumb"
+            style="width:52px;height:72px;border-radius:4px;background:var(--surface3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.6rem;overflow:hidden">
+          </div>
+          <div style="min-width:0;flex:1">
+            <div id="shuffle-title" style="font-size:1rem;font-weight:600;line-height:1.3;margin-bottom:.35rem"></div>
+            <div id="shuffle-meta" style="font-size:.75rem;color:var(--t3);display:flex;gap:.4rem;flex-wrap:wrap"></div>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full" style="margin-top:.5rem" onclick="doShuffle()">🎲 Sortear
+          outro</button>
+      </div>
+
+      <!-- Filtros do sorteio -->
+      <div id="shuffle-filters">
+        <div style="font-size:.78rem;color:var(--t3);margin-bottom:.6rem">
+          Sorteio respeita os filtros ativos na fila. Refine ainda mais abaixo:
+        </div>
+
+        <div class="field" style="margin-bottom:.6rem">
+          <label class="fl">Tipo</label>
+          <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.3rem">
+            <button class="chip on" id="sh-all" onclick="shType('all')">Todos</button>
+            <button class="chip" id="sh-movie" onclick="shType('movie')">🎬 Filmes</button>
+            <button class="chip" id="sh-show" onclick="shType('show')">📺 Séries</button>
+            <button class="chip" id="sh-anime" onclick="shType('anime')">⛩ Animes</button>
+          </div>
+        </div>
+
+        <div class="field" style="margin-bottom:.6rem">
+          <label class="fl">Apenas</label>
+          <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.3rem">
+            <button class="chip" id="sh-notstarted" onclick="shToggleState('notstarted')">👁 Não comecei</button>
+            <button class="chip" id="sh-inprogress" onclick="shToggleState('inprogress')">▶ Em andamento</button>
+            <button class="chip" id="sh-planning" onclick="shToggleState('planning')">📋 Planejado</button>
+          </div>
+        </div>
+
+        <div class="field" style="margin-bottom:.75rem">
+          <label class="fl">Período</label>
+          <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.3rem">
+            <button class="chip" id="sh-2020s" onclick="shToggleDecade('2020s')">2020s</button>
+            <button class="chip" id="sh-2010s" onclick="shToggleDecade('2010s')">2010s</button>
+            <button class="chip" id="sh-2000s" onclick="shToggleDecade('2000s')">2000s</button>
+            <button class="chip" id="sh-1990s" onclick="shToggleDecade('1990s')">90s</button>
+            <button class="chip" id="sh-pre1990" onclick="shToggleDecade('pre1990')">Clássicos</button>
+          </div>
+        </div>
+
+        <div id="shuffle-pool-info"
+          style="font-size:.72rem;color:var(--t3);font-family:var(--mono);margin-bottom:.65rem;text-align:center"></div>
+
+        <button class="btn btn-primary btn-full" onclick="doShuffle()">🎲 Sortear!</button>
+      </div>
+
+      <button class="btn btn-ghost btn-full btn-sm" onclick="closeShuffleModal()">Fechar</button>
+    </div>
+  </div>
+
+  <!-- YOUTUBE MODAL -->
+  <div class="modal-ov" id="yt-modal" style="display:none" onclick="if(event.target===this)closeYTModal()">
+    <div class="modal">
+      <h3 id="yt-modal-title">Adicionar à Fila do YouTube</h3>
+      <div class="form-grid">
+        <div class="field field-full">
+          <label class="fl">URL do YouTube</label>
+          <input type="text" id="yt-url" placeholder="https://youtube.com/watch?v=... ou playlist ou canal"
+            oninput="ytParseUrl(this.value)" />
+          <p style="font-size:.7rem;color:var(--t3);margin-top:.2rem">Cole o link do vídeo, playlist ou canal. O título
+            é preenchido automaticamente se possível.</p>
+        </div>
+        <div class="field field-full"><label class="fl">Título</label><input type="text" id="yt-title"
+            placeholder="Nome do vídeo, série ou canal" /></div>
+        <div class="field"><label class="fl">Categoria</label>
+          <select id="yt-cat">
+            <option value="video">📹 Vídeo</option>
+            <option value="series">📋 Série/Playlist</option>
+            <option value="channel">📺 Canal</option>
+          </select>
+        </div>
+        <div class="field"><label class="fl">Status</label>
+          <select id="yt-status">
+            <option value="watch">Assistir</option>
+            <option value="watching">Assistindo</option>
+            <option value="done">Assistido</option>
+          </select>
+        </div>
+        <div class="field"><label class="fl">Duração (opcional)</label><input type="text" id="yt-duration"
+            placeholder="ex: 1h30min, 12 eps…" /></div>
+        <div class="field"><label class="fl">Canal/Autor</label><input type="text" id="yt-channel"
+            placeholder="Nome do canal" /></div>
+        <div class="field field-full"><label class="fl">Notas (opcional)</label><input type="text" id="yt-notes"
+            placeholder="Por que quer assistir…" /></div>
+      </div>
+      <div class="mfoot">
+        <button class="btn btn-ghost" onclick="closeYTModal()">Cancelar</button>
+        <button class="btn btn-sm" id="yt-del-btn" onclick="deleteYT()"
+          style="display:none;background:var(--rbg);color:var(--red);border:1px solid var(--rbd)">Excluir</button>
+        <button class="btn btn-primary" onclick="saveYT()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIME DETAILS MODAL -->
+  <div class="modal-ov" id="time-details-modal" style="display:none"
+    onclick="if(event.target===this)closeTimeDetails()">
+    <div class="modal" style="max-width:440px">
+      <h3>⏱️ Detalhamento do Tempo Gasto</h3>
+      <div style="display:flex;flex-direction:column;gap:.8rem;margin-top:.4rem">
+        <p style="font-size:.78rem;color:var(--t3)">Tempo total estimado gasto consumindo conteúdo de todas as
+          categorias:</p>
+
+        <div
+          style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:1rem;display:flex;flex-direction:column;gap:.6rem">
+          <div style="display:flex;justify-content:space-between;font-size:.82rem">
+            <span>🎬 Filmes:</span>
+            <strong id="td-movies">—</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.82rem">
+            <span>📺 Séries:</span>
+            <strong id="td-shows">—</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.82rem">
+            <span>⛩️ Animes:</span>
+            <strong id="td-animes">—</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.82rem">
+            <span>🎮 Jogos:</span>
+            <strong id="td-games">—</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.82rem">
+            <span>📚 Livros (leitura):</span>
+            <strong id="td-books">—</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.82rem">
+            <span>▶️ YouTube:</span>
+            <strong id="td-youtube">—</strong>
+          </div>
+          <div
+            style="display:flex;justify-content:space-between;font-size:.82rem;border-top:1px solid var(--border);padding-top:.6rem;font-weight:700;color:var(--accent)">
+        <div style="font-size:.7rem;color:var(--t4);line-height:1.4">
+          * Estimativas usadas no cálculo:<br>
+          - Filmes: 120 minutos por filme assistido.<br>
+          - Séries: 45 minutos por episódio assistido.<br>
+          - Animes: 24 minutos por episódio assistido.<br>
+          - Livros: 1.5 minuto por página lida.<br>
+          - Jogos e YouTube: soma direta dos tempos informados.
+        </div>
+      </div>
+      <div class="mfoot">
+        <button class="btn btn-primary" onclick="closeTimeDetails()">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,3 @@
+
+    // ══════════════════════════════════════════
+    // EXPLICATIVE HELP & CRONÔMETRO FUNCTIONS

@@ -1,0 +1,638 @@
+[
+  {
+    "name": "saveRatingsCache",
+    "line": 28
+  },
+  {
+    "name": "loadRatingsCache",
+    "line": 29
+  },
+  {
+    "name": "saveSess",
+    "line": 35
+  },
+  {
+    "name": "loadSess",
+    "line": 47
+  },
+  {
+    "name": "clearSess",
+    "line": 64
+  },
+  {
+    "name": "saveFranchises",
+    "line": 65
+  },
+  {
+    "name": "loadFranchises",
+    "line": 66
+  },
+  {
+    "name": "savePosterCache",
+    "line": 67
+  },
+  {
+    "name": "loadPosterCache",
+    "line": 68
+  },
+  {
+    "name": "savePins",
+    "line": 69
+  },
+  {
+    "name": "loadPins",
+    "line": 70
+  },
+  {
+    "name": "startTraktFlow",
+    "line": 76
+  },
+  {
+    "name": "cancelDevice",
+    "line": 108
+  },
+  {
+    "name": "loginTraktManual",
+    "line": 109
+  },
+  {
+    "name": "resolveTraktUser",
+    "line": 116
+  },
+  {
+    "name": "startAniListFlow",
+    "line": 121
+  },
+  {
+    "name": "startAniListFlowFromLogin",
+    "line": 126
+  },
+  {
+    "name": "openALPopup",
+    "line": 136
+  },
+  {
+    "name": "loginALManual",
+    "line": 146
+  },
+  {
+    "name": "checkALCallback",
+    "line": 180
+  },
+  {
+    "name": "resolveALUser",
+    "line": 204
+  },
+  {
+    "name": "alQuery",
+    "line": 229
+  },
+  {
+    "name": "fetchALLists",
+    "line": 241
+  },
+  {
+    "name": "proceedToApp",
+    "line": 250
+  },
+  {
+    "name": "doLogout",
+    "line": 275
+  },
+  {
+    "name": "traktGet",
+    "line": 315
+  },
+  {
+    "name": "loadLists",
+    "line": 325
+  },
+  {
+    "name": "renderListPicker",
+    "line": 361
+  },
+  {
+    "name": "toggleList",
+    "line": 374
+  },
+  {
+    "name": "selectAllLists",
+    "line": 379
+  },
+  {
+    "name": "deselectAllLists",
+    "line": 380
+  },
+  {
+    "name": "loadData",
+    "line": 385
+  },
+  {
+    "name": "fetchListItems",
+    "line": 440
+  },
+  {
+    "name": "buildALItem",
+    "line": 482
+  },
+  {
+    "name": "fetchShowsProgress",
+    "line": 505
+  },
+  {
+    "name": "fetchHistory",
+    "line": 514
+  },
+  {
+    "name": "buildTraktMovie",
+    "line": 534
+  },
+  {
+    "name": "buildTraktShow",
+    "line": 535
+  },
+  {
+    "name": "buildWatchedMovie",
+    "line": 536
+  },
+  {
+    "name": "buildWatchedShow",
+    "line": 537
+  },
+  {
+    "name": "sleep",
+    "line": 538
+  },
+  {
+    "name": "loadDemo",
+    "line": 573
+  },
+  {
+    "name": "demoRebuild",
+    "line": 611
+  },
+  {
+    "name": "buildDemoHistory",
+    "line": 612
+  },
+  {
+    "name": "buildDemoRevisited",
+    "line": 613
+  },
+  {
+    "name": "toggleType",
+    "line": 618
+  },
+  {
+    "name": "toggleState",
+    "line": 619
+  },
+  {
+    "name": "toggleDecade",
+    "line": 620
+  },
+  {
+    "name": "setSort",
+    "line": 621
+  },
+  {
+    "name": "clearPHL",
+    "line": 622
+  },
+  {
+    "name": "applyPreset",
+    "line": 624
+  },
+  {
+    "name": "resetFilters",
+    "line": 638
+  },
+  {
+    "name": "applyFilters",
+    "line": 647
+  },
+  {
+    "name": "sf",
+    "line": 680
+  },
+  {
+    "name": "togglePin",
+    "line": 682
+  },
+  {
+    "name": "updateFBar",
+    "line": 689
+  },
+  {
+    "name": "cfgSaveOMDb",
+    "line": 701
+  },
+  {
+    "name": "cfgClearRatings",
+    "line": 715
+  },
+  {
+    "name": "getFrNextIds",
+    "line": 729
+  },
+  {
+    "name": "applyFrPromo",
+    "line": 740
+  },
+  {
+    "name": "getFrInfo",
+    "line": 745
+  },
+  {
+    "name": "autoDetect",
+    "line": 749
+  },
+  {
+    "name": "renderFranchises",
+    "line": 772
+  },
+  {
+    "name": "toggleFrGrp",
+    "line": 802
+  },
+  {
+    "name": "openFrEditor",
+    "line": 806
+  },
+  {
+    "name": "closeFrModal",
+    "line": 815
+  },
+  {
+    "name": "renderFrList",
+    "line": 816
+  },
+  {
+    "name": "frRm",
+    "line": 821
+  },
+  {
+    "name": "frDS",
+    "line": 822
+  },
+  {
+    "name": "frAC",
+    "line": 823
+  },
+  {
+    "name": "frSel",
+    "line": 830
+  },
+  {
+    "name": "frAddSel",
+    "line": 831
+  },
+  {
+    "name": "saveFr",
+    "line": 832
+  },
+  {
+    "name": "deleteFr",
+    "line": 833
+  },
+  {
+    "name": "render",
+    "line": 838
+  },
+  {
+    "name": "alStatusBadge",
+    "line": 846
+  },
+  {
+    "name": "renderList",
+    "line": 853
+  },
+  {
+    "name": "renderGrid",
+    "line": 883
+  },
+  {
+    "name": "fetchOMDbRatings",
+    "line": 903
+  },
+  {
+    "name": "getRatingsHTML",
+    "line": 942
+  },
+  {
+    "name": "lazyLoadRatings",
+    "line": 963
+  },
+  {
+    "name": "renderHistory",
+    "line": 994
+  },
+  {
+    "name": "renderRevisited",
+    "line": 1021
+  },
+  {
+    "name": "switchTab",
+    "line": 1037
+  },
+  {
+    "name": "updateTabCounts",
+    "line": 1053
+  },
+  {
+    "name": "setView",
+    "line": 1061
+  },
+  {
+    "name": "updateStats",
+    "line": 1062
+  },
+  {
+    "name": "setSyncing",
+    "line": 1084
+  },
+  {
+    "name": "setAutoRefresh",
+    "line": 1085
+  },
+  {
+    "name": "showContainerMsg",
+    "line": 1086
+  },
+  {
+    "name": "showErr",
+    "line": 1087
+  },
+  {
+    "name": "refreshData",
+    "line": 1088
+  },
+  {
+    "name": "saveBooksStore",
+    "line": 1097
+  },
+  {
+    "name": "loadBooksStore",
+    "line": 1098
+  },
+  {
+    "name": "openBookEditor",
+    "line": 1101
+  },
+  {
+    "name": "closeBkModal",
+    "line": 1115
+  },
+  {
+    "name": "saveBook",
+    "line": 1116
+  },
+  {
+    "name": "deleteBook",
+    "line": 1134
+  },
+  {
+    "name": "renderBooks",
+    "line": 1136
+  },
+  {
+    "name": "lazyLoadBookCovers",
+    "line": 1186
+  },
+  {
+    "name": "importStoryGraphCSV",
+    "line": 1200
+  },
+  {
+    "name": "parseCSVLine",
+    "line": 1249
+  },
+  {
+    "name": "addDemoBooks",
+    "line": 1261
+  },
+  {
+    "name": "saveGamesStore",
+    "line": 1275
+  },
+  {
+    "name": "loadGamesStore",
+    "line": 1276
+  },
+  {
+    "name": "openGameEditor",
+    "line": 1279
+  },
+  {
+    "name": "closeGmModal",
+    "line": 1292
+  },
+  {
+    "name": "saveGame",
+    "line": 1293
+  },
+  {
+    "name": "deleteGame",
+    "line": 1310
+  },
+  {
+    "name": "renderGames",
+    "line": 1312
+  },
+  {
+    "name": "addDemoGames",
+    "line": 1356
+  },
+  {
+    "name": "renderAgora",
+    "line": 1370
+  },
+  {
+    "name": "getContextItems",
+    "line": 1389
+  },
+  {
+    "name": "renderCtxItem",
+    "line": 1457
+  },
+  {
+    "name": "getCachedPoster",
+    "line": 1505
+  },
+  {
+    "name": "fetchTMDBPoster",
+    "line": 1508
+  },
+  {
+    "name": "fetchBookCover",
+    "line": 1533
+  },
+  {
+    "name": "gameAvatarColor",
+    "line": 1556
+  },
+  {
+    "name": "lazyLoadPosters",
+    "line": 1562
+  },
+  {
+    "name": "injectPoster",
+    "line": 1583
+  },
+  {
+    "name": "saveYTStore",
+    "line": 1599
+  },
+  {
+    "name": "loadYTStore",
+    "line": 1600
+  },
+  {
+    "name": "ytVideoId",
+    "line": 1603
+  },
+  {
+    "name": "ytPlaylistId",
+    "line": 1607
+  },
+  {
+    "name": "ytChannelHandle",
+    "line": 1611
+  },
+  {
+    "name": "ytParseUrl",
+    "line": 1616
+  },
+  {
+    "name": "openYTEditor",
+    "line": 1640
+  },
+  {
+    "name": "closeYTModal",
+    "line": 1653
+  },
+  {
+    "name": "saveYT",
+    "line": 1654
+  },
+  {
+    "name": "deleteYT",
+    "line": 1672
+  },
+  {
+    "name": "renderYT",
+    "line": 1674
+  },
+  {
+    "name": "addDemoYT",
+    "line": 1721
+  },
+  {
+    "name": "openSettings",
+    "line": 1729
+  },
+  {
+    "name": "closeSettings",
+    "line": 1749
+  },
+  {
+    "name": "syncALSettingsUI",
+    "line": 1753
+  },
+  {
+    "name": "cfgConnectAL",
+    "line": 1775
+  },
+  {
+    "name": "cfgReloadAL",
+    "line": 1783
+  },
+  {
+    "name": "cfgDisconnectAL",
+    "line": 1789
+  },
+  {
+    "name": "cfgSaveTMDB",
+    "line": 1803
+  },
+  {
+    "name": "cfgClearPosters",
+    "line": 1822
+  },
+  {
+    "name": "openShuffle",
+    "line": 1839
+  },
+  {
+    "name": "closeShuffleModal",
+    "line": 1845
+  },
+  {
+    "name": "shType",
+    "line": 1847
+  },
+  {
+    "name": "shToggleState",
+    "line": 1855
+  },
+  {
+    "name": "shToggleDecade",
+    "line": 1862
+  },
+  {
+    "name": "getShufflePool",
+    "line": 1869
+  },
+  {
+    "name": "updateShufflePool",
+    "line": 1905
+  },
+  {
+    "name": "doShuffle",
+    "line": 1913
+  },
+  {
+    "name": "exportBackup",
+    "line": 1955
+  },
+  {
+    "name": "csvEsc",
+    "line": 2014
+  },
+  {
+    "name": "importBackup",
+    "line": 2019
+  },
+  {
+    "name": "showBackupMsg",
+    "line": 2081
+  },
+  {
+    "name": "toggleLoginHelp",
+    "line": 2117
+  },
+  {
+    "name": "updateALAuthLink",
+    "line": 2124
+  },
+  {
+    "name": "parseGameHours",
+    "line": 2133
+  },
+  {
+    "name": "parseYTDuration",
+    "line": 2142
+  },
+  {
+    "name": "calculateTotalTimeSpent",
+    "line": 2158
+  },
+  {
+    "name": "openTimeDetails",
+    "line": 2237
+  },
+  {
+    "name": "closeTimeDetails",
+    "line": 2275
+  }
+]
