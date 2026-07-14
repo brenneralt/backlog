@@ -414,6 +414,59 @@
           </div>
         </div>
 
+        <!-- DECIDIR -->
+        <div id="pane-decidir" style="display:none; padding: 1rem;">
+          <div id="decidir-quiz" class="decidir-container" style="max-width: 400px; margin: 0 auto; background: var(--surface); padding: 1.5rem; border-radius: var(--r); border: 1px solid var(--border);">
+            <h2 style="margin-bottom: 1.5rem; text-align: center; color: var(--t1);">O que eu vejo agora?</h2>
+            
+            <div class="field" style="margin-bottom: 1.2rem;">
+              <label class="fl">Como você tá agora?</label>
+              <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+                <button class="chip" id="dec-energy-low" onclick="decSelectEnergy('low')">😴 Sem energia</button>
+                <button class="chip" id="dec-energy-neutral" onclick="decSelectEnergy('neutral')">😐 Neutro</button>
+                <button class="chip" id="dec-energy-high" onclick="decSelectEnergy('high')">🔥 Concentrado</button>
+              </div>
+            </div>
+
+            <div class="field" style="margin-bottom: 1.2rem;">
+              <label class="fl">Quanto tempo livre?</label>
+              <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+                <button class="chip" id="dec-time-20" onclick="decSelectTime(20)">20 min</button>
+                <button class="chip" id="dec-time-45" onclick="decSelectTime(45)">45 min</button>
+                <button class="chip" id="dec-time-90" onclick="decSelectTime(90)">1h30+</button>
+                <button class="chip" id="dec-time-any" onclick="decSelectTime(999)">Sem pressa</button>
+              </div>
+            </div>
+
+            <div class="field" style="margin-bottom: 1.5rem;">
+              <label class="fl">De onde?</label>
+              <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+                <button class="chip" id="dec-src-backlog" onclick="decSelectSrc('backlog')">📥 Do meu Backlog</button>
+                <button class="chip" id="dec-src-new" onclick="decSelectSrc('new')">✨ Sugestão Nova</button>
+              </div>
+            </div>
+
+            <button class="btn btn-primary btn-full" id="dec-start-btn" onclick="startDecider()" disabled style="font-size: 1.1rem; padding: .8rem;">Começar</button>
+          </div>
+
+          <div id="decidir-result" style="display:none; flex-direction:column; align-items:center; max-width: 400px; margin: 0 auto; padding-top: 1rem;">
+            <div id="decidir-card" style="width: 100%; margin-bottom: 1rem; display:flex; justify-content:center;">
+               <!-- Card content injected via JS -->
+            </div>
+            <div style="display:flex; gap: .8rem; width: 100%; margin-top: .5rem;">
+              <button class="btn btn-primary" style="flex:1; font-size: 1.1rem; padding: .8rem;" onclick="deciderAccept()">✅ Bora</button>
+              <button class="btn btn-secondary" style="flex:1; font-size: 1.1rem; padding: .8rem;" id="decider-reject-btn" onclick="deciderReject()">❌ Outro</button>
+            </div>
+            <div id="decidir-skips-left" style="margin-top: 1rem; color: var(--t3); font-size: 0.85rem; text-align:center;"></div>
+            <button class="btn btn-ghost btn-sm" style="margin-top:1rem" onclick="deciderReset()">Refazer Escolhas</button>
+          </div>
+          
+          <div id="decidir-loading" style="display:none; flex-direction:column; align-items:center; justify-content:center; padding: 3rem 0;">
+            <div class="spinner" style="width: 40px; height: 40px; border-width: 4px; margin-bottom: 1rem;"></div>
+            <div style="color:var(--t2)" id="decidir-loading-msg">Buscando o item perfeito...</div>
+          </div>
+        </div>
+
         <!-- AGORA — CONTEXT QUEUE -->
         <div id="pane-agora" style="display:none">
           <div style="margin-bottom:.65rem;display:flex;align-items:center;justify-content:space-between">
