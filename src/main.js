@@ -2441,7 +2441,7 @@ window.startDecider = async () => {
   let items = [];
 
   if (decState.src === 'backlog') {
-    items = S.listItems.filter(i => {
+    items = S.allItems.filter(i => {
       if (decState.time === 20 && (i.type === 'movie' || i.type === 'show')) {
         if (i.type !== 'anime') return false; 
       }
