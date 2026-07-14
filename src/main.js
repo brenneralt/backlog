@@ -1015,7 +1015,7 @@
     // ══════════════════════════════════════════
     export function switchTab(tab) {
       S.currentTab = tab;
-      ['fila', 'agora', 'franchise', 'books', 'games', 'youtube', 'history', 'revisited'].forEach(t => {
+      ['fila', 'agora', 'franchise', 'books', 'games', 'youtube', 'history', 'revisited', 'decidir'].forEach(t => {
         const tabEl = document.getElementById('tab-' + t);
         const paneEl = document.getElementById('pane-' + t);
         if (tabEl) tabEl.classList.toggle('on', t === tab);
@@ -2401,3 +2401,169 @@ window.saveYT = saveYT;
 window.renderRevisited = renderRevisited;
 window.shToggleDecade = shToggleDecade;
 window.buildWatchedShow = buildWatchedShow;
+
+// ==========================================
+// DECIDER (TDAH UX)
+// ==========================================
+
+let decState = { energy: null, time: null, src: null, candidates: [], currentIndex: 0, skips: 3 };
+
+window.decSelectEnergy = (val) => {
+  decState.energy = val;
+  document.querySelectorAll('[id^="dec-energy-"]').forEach(e => e.classList.remove('on'));
+  document.getElementById('dec-energy-' + val).classList.add('on');
+  decCheckStart();
+};
+
+window.decSelectTime = (val) => {
+  decState.time = val;
+  document.querySelectorAll('[id^="dec-time-"]').forEach(e => e.classList.remove('on'));
+  document.getElementById('dec-time-' + (val === 999 ? 'any' : val)).classList.add('on');
+  decCheckStart();
+};
+
+window.decSelectSrc = (val) => {
+  decState.src = val;
+  document.querySelectorAll('[id^="dec-src-"]').forEach(e => e.classList.remove('on'));
+  document.getElementById('dec-src-' + val).classList.add('on');
+  decCheckStart();
+};
+
+window.decCheckStart = () => {
+  document.getElementById('dec-start-btn').disabled = !(decState.energy && decState.time && decState.src);
+};
+
+window.startDecider = async () => {
+  document.getElementById('decidir-quiz').style.display = 'none';
+  document.getElementById('decidir-loading').style.display = 'flex';
+  decState.skips = 3;
+  decState.currentIndex = 0;
+  let items = [];
+
+  if (decState.src === 'backlog') {
+    items = S.listItems.filter(i => {
+      if (decState.time === 20 && (i.type === 'movie' || i.type === 'show')) {
+        if (i.type !== 'anime') return false; 
+      }
+      if (decState.time === 45 && i.type === 'movie') return false;
+      
+      const isAnime = i.type === 'anime' || (i.genres && i.genres.includes('anime'));
+      const isComedy = i.genres && i.genres.includes('comedy');
+      const isAction = i.genres && (i.genres.includes('action') || i.genres.includes('adventure'));
+      
+      if (decState.energy === 'low') {
+        if (i.type === 'movie' && !isComedy) return false;
+        if (i.type === 'show' && !(isComedy || isAnime)) return false;
+      }
+      if (decState.energy === 'high') {
+        if (isComedy && !isAction) return false;
+      }
+      return true;
+    });
+    items.sort(() => 0.5 - Math.random());
+  } else {
+    try {
+      const type = decState.time <= 45 ? 'shows' : 'movies';
+      const recs = await traktGet(`/recommendations/${type}?limit=20&ignore_collected=true`);
+      items = recs.map(r => {
+        const item = r.movie || r.show;
+        return {
+          id: item.ids.trakt,
+          title: item.title,
+          year: item.year,
+          type: r.movie ? 'movie' : 'show',
+          slug: item.ids.slug
+        };
+      });
+      items.sort(() => 0.5 - Math.random());
+    } catch (e) {
+      console.error('Decider: Erro ao buscar recomendações', e);
+      items = [];
+    }
+  }
+
+  decState.candidates = items;
+  document.getElementById('decidir-loading').style.display = 'none';
+  
+  if (items.length === 0) {
+    alert("Não achamos nada com esses filtros! Tente mudar a energia ou tempo.");
+    deciderReset();
+    return;
+  }
+  
+  document.getElementById('decidir-result').style.display = 'flex';
+  showDeciderItem();
+};
+
+window.showDeciderItem = () => {
+  const item = decState.candidates[decState.currentIndex];
+  const cardEl = document.getElementById('decidir-card');
+  const rejectBtn = document.getElementById('decider-reject-btn');
+  const skipsEl = document.getElementById('decidir-skips-left');
+  
+  if (!item) {
+    cardEl.innerHTML = '<div style="padding:2rem">Acabaram as opções! Refaça o teste.</div>';
+    rejectBtn.disabled = true;
+    skipsEl.textContent = '';
+    return;
+  }
+  
+  rejectBtn.disabled = false;
+  
+  let posterUrl = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300"><rect width="100%" height="100%" fill="%23222"/><text x="50%" y="50%" fill="%23555" font-family="sans-serif" font-size="14" text-anchor="middle">Sem Capa</text></svg>';
+  
+  if (S.posterCache['tmdb_' + item.id]) {
+    posterUrl = S.posterCache['tmdb_' + item.id];
+  } else if (item.type !== 'anime') {
+    fetchTMDBPoster(item).then(url => {
+      if (url && document.getElementById('dec-poster')) {
+        document.getElementById('dec-poster').src = url;
+      }
+    });
+  }
+
+  cardEl.innerHTML = `
+    <div style="background:var(--surface2); border:1px solid var(--border); border-radius:var(--r); padding:1rem; width:100%; max-width:300px; display:flex; flex-direction:column; align-items:center;">
+      <img id="dec-poster" src="${posterUrl}" style="width:200px; height:300px; object-fit:cover; border-radius:4px; margin-bottom:1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.5);" />
+      <h3 style="margin-bottom:.5rem; text-align:center; color:var(--t1)">${item.title} <span style="color:var(--t3); font-weight:400">(${item.year || '?'})</span></h3>
+      <span style="font-size:0.75rem; color:var(--t3); text-transform:uppercase; letter-spacing:1px; border:1px solid var(--border); padding: 2px 6px; border-radius: 4px;">${item.type}</span>
+    </div>
+  `;
+  
+  skipsEl.innerHTML = decState.skips > 0 
+    ? `Você tem <strong>${decState.skips}</strong> "pulos" restantes.`
+    : `<span style="color:var(--red)">Última chance! Se pular agora, vai ter que tomar uma decisão sozinho.</span>`;
+};
+
+window.deciderAccept = () => {
+  const item = decState.candidates[decState.currentIndex];
+  if (!item) return;
+  
+  if (decState.src === 'backlog') {
+    const inp = document.getElementById('inp-search');
+    if (inp) inp.value = item.title;
+    switchTab('fila');
+    render();
+    alert("Boa escolha! Filtramos a sua fila para você achar o botão de play fácil!");
+  } else {
+    window.open(\`https://trakt.tv/\${item.type}s/\${item.slug}\`, '_blank');
+  }
+  deciderReset();
+};
+
+window.deciderReject = () => {
+  if (decState.skips <= 0) {
+    alert("Você esgotou seus pulos! Assista esse ou vá descansar a mente fazendo outra coisa!");
+    document.getElementById('decider-reject-btn').disabled = true;
+    return;
+  }
+  decState.skips--;
+  decState.currentIndex++;
+  showDeciderItem();
+};
+
+window.deciderReset = () => {
+  document.getElementById('decidir-result').style.display = 'none';
+  document.getElementById('decidir-loading').style.display = 'none';
+  document.getElementById('decidir-quiz').style.display = 'block';
+};
