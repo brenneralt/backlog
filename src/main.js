@@ -2546,7 +2546,7 @@ window.deciderAccept = () => {
     render();
     alert("Boa escolha! Filtramos a sua fila para você achar o botão de play fácil!");
   } else {
-    window.open(\`https://trakt.tv/\${item.type}s/\${item.slug}\`, '_blank');
+    window.open(`https://trakt.tv/${item.type}s/${item.slug}`, '_blank');
   }
   deciderReset();
 };
