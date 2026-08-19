@@ -1,5 +1,16 @@
-import initSqlJs from 'sql.js';
 import { MediaItem } from './db';
+
+// Carrega o sql.js dinamicamente para evitar conflitos de build no Vite/Rollup
+async function loadSqlJs() {
+  if ((window as any).initSqlJs) return (window as any).initSqlJs;
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js';
+    script.onload = () => resolve((window as any).initSqlJs);
+    script.onerror = () => reject(new Error("Falha ao carregar sql.js"));
+    document.head.appendChild(script);
+  });
+}
 
 export async function parseAntennaPodDB(file: File): Promise<MediaItem[]> {
   return new Promise((resolve, reject) => {
@@ -7,9 +18,11 @@ export async function parseAntennaPodDB(file: File): Promise<MediaItem[]> {
     reader.onload = async (e) => {
       try {
         const uInt8Array = new Uint8Array(e.target?.result as ArrayBuffer);
+        
+        const initSqlJs = await loadSqlJs() as any;
         const SQL = await initSqlJs({
-          // Puxa o arquivo WASM diretamente do CDN para rodar o SQLite no navegador
-          locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.wasm`
+          // Puxa o arquivo WASM diretamente do CDN
+          locateFile: (f: string) => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${f}`
         });
         
         const db = new SQL.Database(uInt8Array);
