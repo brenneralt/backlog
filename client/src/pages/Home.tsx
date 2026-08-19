@@ -2,6 +2,7 @@
  * OmniTrack reference dashboard — design: biblioteca editorial dark mode.
  * Estrutura assimétrica: sidebar persistente, feed de descoberta, painéis utilitários.
  */
+import { useState } from "react";
 import {
   ArchiveRestore,
   BookOpen,
@@ -52,12 +53,12 @@ const ASSET = {
 };
 
 const navMedia = [
-  [Clapperboard, "Filmes"],
-  [Tv, "Séries de TV"],
-  [Sparkles, "Animes"],
-  [BookOpen, "Livros"],
-  [Gamepad2, "Jogos"],
-  [Headphones, "Podcasts", true],
+  [Clapperboard, "Filmes", "movie"],
+  [Tv, "Séries de TV", "show"],
+  [Sparkles, "Animes", "anime"],
+  [BookOpen, "Livros", "book"],
+  [Gamepad2, "Jogos", "game"],
+  [Headphones, "Podcasts", "podcast"],
 ] as const;
 
 const navStatus = [
@@ -92,9 +93,9 @@ const completed = [
   ["Oppenheimer", "2023", "is-amber", ASSET.mountain],
 ] as const;
 
-function NavItem({ icon: Icon, label, active = false }: { icon: React.ComponentType<{ className?: string }>; label: string; active?: boolean }) {
+function NavItem({ icon: Icon, label, active = false, onClick }: { icon: React.ComponentType<{ className?: string }>; label: string; active?: boolean; onClick?: () => void }) {
   return (
-    <button className={`ot-nav-item ${active ? "is-active" : ""}`} type="button">
+    <button className={`ot-nav-item ${active ? "is-active" : ""}`} type="button" onClick={onClick}>
       <Icon />
       <span>{label}</span>
     </button>
@@ -135,9 +136,13 @@ function SimpleCard({ item, completed = false }: { item: readonly [string, strin
 
 export default function Home() {
   const { items, isLoading, addMultipleItems } = useMedia();
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
+
+  // Filtra a lista inteira baseada na aba clicada
+  const filteredItems = activeFilter ? items.filter(i => i.type === activeFilter) : items;
 
   // Mapeamento dinâmico baseado no Banco de Dados Local (IndexedDB)
-  const dbWatching = items.filter(i => i.status === 'watching').map(item => ({
+  const dbWatching = filteredItems.filter(i => i.status === 'watching').map(item => ({
     title: item.title,
     meta: item.year || item.type,
     value: item.progress || Math.floor(Math.random() * 100), // Fallback visual
@@ -146,18 +151,19 @@ export default function Home() {
     tone: 'is-violet'
   }));
 
-  const dbWatchlist = items.filter(i => i.status === 'planned').map(item => (
+  const dbWatchlist = filteredItems.filter(i => i.status === 'planned').map(item => (
     [item.title, item.year || item.type, "is-void", item.posterUrl || ASSET.stellar] as const
   ));
 
-  const dbCompleted = items.filter(i => i.status === 'completed').map(item => (
+  const dbCompleted = filteredItems.filter(i => i.status === 'completed').map(item => (
     [item.title, item.year || item.type, "is-amber", item.posterUrl || ASSET.city] as const
   ));
 
   // Exibe os dados do banco, ou os placeholders de design se o banco estiver vazio
-  const displayWatching = dbWatching.length > 0 ? dbWatching : continueWatching;
-  const displayWatchlist = dbWatchlist.length > 0 ? dbWatchlist : watchlist;
-  const displayCompleted = dbCompleted.length > 0 ? dbCompleted : completed;
+  // (Só mostramos fallback se não tiver nenhum filtro ativo, senão fica estranho)
+  const displayWatching = (dbWatching.length > 0 || activeFilter) ? dbWatching : continueWatching;
+  const displayWatchlist = (dbWatchlist.length > 0 || activeFilter) ? dbWatchlist : watchlist;
+  const displayCompleted = (dbCompleted.length > 0 || activeFilter) ? dbCompleted : completed;
 
   return (
     <div className="omnitrack">
@@ -168,7 +174,17 @@ export default function Home() {
             <nav aria-label="Navegação principal">
               <div className="ot-nav-section">
                 <span className="ot-nav-title">MÍDIAS</span>
-                <div className="ot-nav-list">{navMedia.map(([Icon, label, active]) => <NavItem key={label} icon={Icon} label={label} active={active} />)}</div>
+                <div className="ot-nav-list">
+                  {navMedia.map(([Icon, label, typeId]) => (
+                    <NavItem 
+                      key={label} 
+                      icon={Icon} 
+                      label={label} 
+                      active={activeFilter === typeId} 
+                      onClick={() => setActiveFilter(activeFilter === typeId ? null : typeId)} 
+                    />
+                  ))}
+                </div>
               </div>
               <div className="ot-nav-section">
                 <span className="ot-nav-title">STATUS</span>
