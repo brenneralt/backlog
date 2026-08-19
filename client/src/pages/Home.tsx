@@ -3,6 +3,7 @@
  * Estrutura assimétrica: sidebar persistente, feed de descoberta, painéis utilitários.
  */
 import { useState } from "react";
+import PodcastAdder from "../components/PodcastAdder";
 import {
   ArchiveRestore,
   BookOpen,
@@ -234,18 +235,7 @@ export default function Home() {
             </section>
 
             <aside className="ot-utilities" aria-label="Ações rápidas">
-              <section className="ot-panel ot-podcast-panel">
-                <h2 className="ot-panel-heading"><Mic2 /> Podcasts para ouvir</h2>
-                <label className="ot-link-input"><input placeholder="Cole o link de um episódio do Spotify ou YouTube" aria-label="Link de episódio" /><Link2 /></label>
-                <div className="ot-podcast-info"><div className="ot-podcast-cover"><img src={ASSET.podcast} alt="Capa do podcast The Daily Byte" /></div><div><p className="ot-podcast-name">The Daily Byte</p><p className="ot-platform"><HeartPulse /> Spotify</p><p className="ot-duration"><Clock3 /> 1h 42min</p></div></div>
-                <div className="ot-podcast-progress"><div className="ot-mini-track" style={{ "--progress-width": "62%" } as React.CSSProperties}><span /></div><strong>62%</strong></div>
-                <div className="ot-podcast-actions">
-                  <button className="ot-podcast-action is-complete" type="button"><Check /> Marcar como ouvido</button>
-                  <button className="ot-podcast-action" type="button"><Clock3 /> Salvar para depois</button>
-                  <button className="ot-podcast-action is-listening" type="button"><Play /> Ouvindo agora</button>
-                </div>
-                <a className="ot-external-link" href="#spotify">Abrir no Spotify <ExternalLink /></a>
-              </section>
+              <PodcastAdder />
 
               <section className="ot-panel ot-import-panel">
                 <div className="ot-import-header">
