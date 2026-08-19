@@ -39,10 +39,10 @@ import "../styles/omnitrack.css";
 import { useMedia } from "../contexts/MediaContext";
 
 const ASSET = {
-  logo: "/manus-storage/omnitrack-logo_a9cd07b2.png",
-  featured: "/manus-storage/omnitrack-featured-media_89865dd2.png",
-  arcane: "/manus-storage/omnitrack-arcane-media_92e5ca81.png",
-  podcast: "/manus-storage/omnitrack-podcast-cover_266b8b55.png",
+  logo: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=100&q=86",
+  featured: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=900&q=86",
+  arcane: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=900&q=86",
+  podcast: "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?auto=format&fit=crop&w=900&q=86",
   greenWorld: "https://images.unsplash.com/photo-1533929736458-ca588d08c8be?auto=format&fit=crop&w=900&q=86",
   city: "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=900&q=86",
   mountain: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=900&q=86",
