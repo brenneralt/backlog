@@ -4,6 +4,8 @@
  */
 import { useState } from "react";
 import PodcastAdder from "../components/PodcastAdder";
+import RouletteDialog from "../components/RouletteDialog";
+import AddMediaDialog from "../components/AddMediaDialog";
 import {
   ArchiveRestore,
   BookOpen,
@@ -12,6 +14,7 @@ import {
   ChevronRight,
   Clapperboard,
   Clock3,
+  Dices,
   Download,
   ExternalLink,
   FileJson2,
@@ -103,7 +106,7 @@ function NavItem({ icon: Icon, label, active = false, onClick }: { icon: React.C
   );
 }
 
-function MediaCard({ item }: { item: (typeof continueWatching)[number] }) {
+function MediaCard({ item, onComplete, onDelete }: { item: any; onComplete?: () => void; onDelete?: () => void }) {
   return (
     <article className="ot-media-card">
       <div className={`ot-media-image ${item.tone ?? ""}`}>
@@ -118,32 +121,62 @@ function MediaCard({ item }: { item: (typeof continueWatching)[number] }) {
         <div className={`ot-card-track ${item.complete ? "is-complete" : ""}`} style={{ "--progress-width": `${item.value}%` } as React.CSSProperties}><span /></div>
       </div>
       <div className="ot-card-action-row" aria-label="Ações rápidas">
-        <button className="ot-card-action" type="button" aria-label="Continuar"><Play /></button>
-        <button className="ot-card-action" type="button" aria-label="Mais ações"><MoreHorizontal /></button>
+        <button className="ot-card-action" type="button" aria-label="Concluir" onClick={onComplete} title="Marcar como concluído"><Check /></button>
+        <button className="ot-card-action" type="button" aria-label="Deletar" onClick={onDelete} title="Deletar"><X /></button>
       </div>
     </article>
   );
 }
 
-function SimpleCard({ item, completed = false }: { item: readonly [string, string, string, string]; completed?: boolean }) {
+function SimpleCard({ item, completed = false, onComplete, onDelete }: { item: any; completed?: boolean; onComplete?: () => void; onDelete?: () => void }) {
   return (
     <article className="ot-simple-card">
-      <div className={`ot-simple-art ${item[2]}`}><img src={item[3]} alt="" />{completed && <div className="ot-progress-ring" style={{ "--value": 100, "--progress": "var(--ot-emerald)" } as React.CSSProperties}><span><Check /></span></div>}</div>
+      <div className={`ot-simple-art ${item[2]}`}>
+        <img src={item[3]} alt="" />
+        {completed && <div className="ot-progress-ring" style={{ "--value": 100, "--progress": "var(--ot-emerald)" } as React.CSSProperties}><span><Check /></span></div>}
+      </div>
       <h4>{item[0]}</h4>
       <p>{item[1]}</p>
+      <div style={{ display: 'flex', gap: '8px', marginTop: '8px', opacity: 0.6 }}>
+        {!completed && <button onClick={onComplete} title="Concluir" style={{ background: 'transparent' }}><Check size={16} /></button>}
+        <button onClick={onDelete} title="Deletar" style={{ background: 'transparent', color: 'red' }}><X size={16} /></button>
+      </div>
     </article>
   );
 }
 
 export default function Home() {
-  const { items, isLoading, addMultipleItems } = useMedia();
+  const { items, isLoading, addMultipleItems, addOrUpdateItem, removeItem } = useMedia();
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Filtra a lista inteira baseada na aba clicada
+  const handleComplete = (id: string) => {
+    const item = items.find(i => i.id === id);
+    if (item) addOrUpdateItem({ ...item, status: 'completed', progress: 100 });
+  };
+
+  const handleExportDB = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(items));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "meu_omnitrack.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  };
+
+  // Calcula estatísticas globais da biblioteca
+  const totalCompleted = items.filter(i => i.status === 'completed').length;
+  const totalPlanned = items.filter(i => i.status === 'planned').length;
+  const totalWatching = items.filter(i => i.status === 'watching').length;
+
+  // Filtra a lista inteira baseada na aba clicada e na busca
   const filteredItems = activeFilter ? items.filter(i => i.type === activeFilter) : items;
+  const searchedItems = searchQuery ? filteredItems.filter(i => i.title.toLowerCase().includes(searchQuery.toLowerCase())) : filteredItems;
 
   // Mapeamento dinâmico baseado no Banco de Dados Local (IndexedDB)
-  const dbWatching = filteredItems.filter(i => i.status === 'watching').map(item => ({
+  const dbWatching = searchedItems.filter(i => i.status === 'watching').map(item => ({
+    id: item.id,
     title: item.title,
     meta: item.year || item.type,
     value: item.progress || Math.floor(Math.random() * 100), // Fallback visual
@@ -152,12 +185,12 @@ export default function Home() {
     tone: 'is-violet'
   }));
 
-  const dbWatchlist = filteredItems.filter(i => i.status === 'planned').map(item => (
-    [item.title, item.year || item.type, "is-void", item.posterUrl || ASSET.stellar] as const
+  const dbWatchlist = searchedItems.filter(i => i.status === 'planned').map(item => (
+    [item.title, item.year || item.type, "is-void", item.posterUrl || ASSET.stellar, item.id] as const
   ));
 
-  const dbCompleted = filteredItems.filter(i => i.status === 'completed').map(item => (
-    [item.title, item.year || item.type, "is-amber", item.posterUrl || ASSET.city] as const
+  const dbCompleted = searchedItems.filter(i => i.status === 'completed').map(item => (
+    [item.title, item.year || item.type, "is-amber", item.posterUrl || ASSET.city, item.id] as const
   ));
 
   // Exibe os dados do banco, ou os placeholders de design se o banco estiver vazio
@@ -195,8 +228,8 @@ export default function Home() {
                 <span className="ot-nav-title">LISTAS &amp; FERRAMENTAS</span>
                 <div className="ot-nav-list">
                   <NavItem icon={Plus} label="Nova Playlist" />
-                  <NavItem icon={Upload} label="Importar do Trakt" />
-                  <NavItem icon={Download} label="Exportar Base de Dados" />
+                  <NavItem icon={Upload} label="Importar" />
+                  <NavItem icon={Download} label="Exportar Base de Dados" onClick={handleExportDB} />
                 </div>
               </div>
               <div className="ot-nav-section"><div className="ot-nav-list"><NavItem icon={Settings} label="Configurações" /></div></div>
@@ -207,30 +240,48 @@ export default function Home() {
 
         <main className="ot-main" id="inicio">
           <header className="ot-topbar">
-            <label className="ot-search"><Search /><input type="search" placeholder="Buscar títulos ou colar link…" aria-label="Buscar títulos ou links" /></label>
+            <label className="ot-search">
+              <Search />
+              <input 
+                type="search" 
+                placeholder="Buscar títulos ou colar link…" 
+                aria-label="Buscar títulos ou links" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </label>
             <div className="ot-stat-row" aria-label="Estatísticas rápidas">
-              <div className="ot-stat"><Clock3 /><div><strong>248h 36min</strong><span>assistidas</span></div></div>
-              <div className="ot-stat"><CheckCircle2 /><div><strong>42</strong><span>concluídos</span></div></div>
-              <div className="ot-stat"><Library /><div><strong>18</strong><span>na fila</span></div></div>
+              <div className="ot-stat"><Clock3 /><div><strong>{totalWatching}</strong><span>assistindo agora</span></div></div>
+              <div className="ot-stat"><CheckCircle2 /><div><strong>{totalCompleted}</strong><span>concluídos</span></div></div>
+              <div className="ot-stat"><Library /><div><strong>{totalPlanned}</strong><span>na fila</span></div></div>
             </div>
-            <button className="ot-button" type="button"><Plus /><span>Adicionar mídia</span></button>
+            
+            <RouletteDialog>
+              <button className="ot-button" type="button" style={{ background: 'var(--ot-indigo-bright)', color: 'white', border: 'none' }}>
+                <Dices /><span>Roleta</span>
+              </button>
+            </RouletteDialog>
+            
+            <AddMediaDialog>
+              <button className="ot-button" type="button"><Plus /><span>Adicionar mídia</span></button>
+            </AddMediaDialog>
           </header>
 
           <div className="ot-workspace">
             <section className="ot-library" aria-label="Biblioteca">
               <section className="ot-section">
                 <div className="ot-section-header"><div><h1 className="ot-section-heading">Descobrir e continuar</h1><p className="ot-section-subheading">Retome de onde parou ou descubra algo novo.</p></div><a className="ot-section-link" href="#watchlist">Ver tudo <ChevronRight /></a></div>
-                <div className="ot-media-row">{displayWatching.map((item) => <MediaCard key={item.title} item={item} />)}</div>
+                <div className="ot-media-row">{displayWatching.map((item: any) => <MediaCard key={item.title} item={item} onComplete={() => handleComplete(item.id)} onDelete={() => removeItem(item.id)} />)}</div>
               </section>
 
               <section className="ot-section" id="watchlist">
                 <div className="ot-section-header"><h2 className="ot-section-heading">Minha watchlist</h2><a className="ot-section-link" href="#concluidos">Ver tudo <ChevronRight /></a></div>
-                <div className="ot-simple-grid">{displayWatchlist.map((item) => <SimpleCard key={item[0]} item={item} />)}</div>
+                <div className="ot-simple-grid">{displayWatchlist.map((item: any) => <SimpleCard key={item[0]} item={item} onComplete={() => handleComplete(item[4])} onDelete={() => removeItem(item[4])} />)}</div>
               </section>
 
               <section className="ot-section" id="concluidos">
                 <div className="ot-section-header"><h2 className="ot-section-heading">Concluídos recentemente</h2><a className="ot-section-link" href="#inicio">Ver histórico <ChevronRight /></a></div>
-                <div className="ot-simple-grid">{displayCompleted.map((item) => <SimpleCard key={item[0]} item={item} completed />)}</div>
+                <div className="ot-simple-grid">{displayCompleted.map((item: any) => <SimpleCard key={item[0]} item={item} completed onDelete={() => removeItem(item[4])} />)}</div>
               </section>
             </section>
 
