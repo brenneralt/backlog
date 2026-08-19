@@ -232,25 +232,38 @@ export default function Home() {
               </section>
 
               <section className="ot-panel ot-import-panel">
-                <div className="ot-import-header"><div><h2 className="ot-import-title"><ArchiveRestore /> Importar do Trakt</h2><p className="ot-import-copy">Selecione seu arquivo JSON de histórico ou watchlist</p></div><button className="ot-icon-button" type="button" aria-label="Fechar"><X /></button></div>
+                <div className="ot-import-header">
+                  <div>
+                    <h2 className="ot-import-title"><ArchiveRestore /> Importações Locais</h2>
+                    <p className="ot-import-copy">Selecione seu backup do Trakt (JSON) ou AntennaPod (.db)</p>
+                  </div>
+                </div>
                 <div className="ot-dropzone" style={{ position: 'relative', cursor: 'pointer' }}>
                   <input 
                     type="file" 
-                    accept=".json" 
+                    accept=".json,.db" 
                     multiple 
                     style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
                     onChange={async (e) => {
                       if (!e.target.files) return;
-                      const { parseTraktFile } = await import("../lib/import-trakt");
                       const files = Array.from(e.target.files);
                       let totalImported = 0;
                       
                       for (const file of files) {
+                        const isAntennaPod = file.name.endsWith('.db');
                         const isWatchlist = file.name.toLowerCase().includes('watchlist');
                         const status = isWatchlist ? 'planned' : 'completed';
                         
                         try {
-                          const itemsToImport = await parseTraktFile(file, status);
+                          let itemsToImport = [];
+                          if (isAntennaPod) {
+                            const { parseAntennaPodDB } = await import("../lib/import-antennapod");
+                            itemsToImport = await parseAntennaPodDB(file);
+                          } else {
+                            const { parseTraktFile } = await import("../lib/import-trakt");
+                            itemsToImport = await parseTraktFile(file, status);
+                          }
+                          
                           if(itemsToImport.length > 0) {
                              await addMultipleItems(itemsToImport);
                              totalImported += itemsToImport.length;
@@ -264,9 +277,8 @@ export default function Home() {
                       }
                     }}
                   />
-                  {["Arrastar arquivo JSON", "watched.json ou watchlist.json"].map((file) => <div className="ot-file" key={file}><span className="ot-file-icon"><FileJson2 /></span><span>{file}</span></div>)}
+                  {["Trakt: watched.json / watchlist.json", "AntennaPod: backup.db"].map((label) => <div className="ot-file" key={label}><span className="ot-file-icon"><FileJson2 /></span><span>{label}</span></div>)}
                 </div>
-                <div className="ot-import-actions"><button className="ot-button is-quiet" type="button">Limpar</button><button className="ot-button" type="button">Escolher Arquivo</button></div>
               </section>
             </aside>
           </div>
